@@ -4,6 +4,9 @@
    font uses Silkscreen's clearer, blockier digits instead. Letters stay Pixelify. */
 @font-face { font-family: 'Pixelify Sans'; font-weight: 400; src: url('../public/assets/fonts/silkscreen-latin-700-normal.woff2') format('woff2'); unicode-range: U+0030-0039; size-adjust: 88%; }
 @font-face { font-family: 'Pixelify Sans'; font-weight: 700; src: url('../public/assets/fonts/silkscreen-latin-700-normal.woff2') format('woff2'); unicode-range: U+0030-0039; size-adjust: 88%; }
+/* Chinese: Fusion Pixel 12px (OFL), subset by tools/zh_font.py. Only CJK ranges, so the English build never loads it. */
+@font-face { font-family: 'Pixelify Sans'; font-weight: 400; src: url('../public/assets/fonts/fusion-pixel-sc.woff2') format('woff2'); unicode-range: U+3000-303F, U+4E00-9FFF, U+FF00-FFEF; }
+@font-face { font-family: 'Pixelify Sans'; font-weight: 700; src: url('../public/assets/fonts/fusion-pixel-sc.woff2') format('woff2'); unicode-range: U+3000-303F, U+4E00-9FFF, U+FF00-FFEF; }
 :root { --card: #fffbf0; --edge: #d4b26a; --ink: #3e3328; --muted: #95826a; --primary: #f2c14e; --primary-d: #c9962e; --soft: #fbefcf; --highlight: #fff4d1; --pink: #ec6f84; }
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; margin: 0; background: #26222c; overflow: hidden; }
@@ -936,6 +939,8 @@ select.need { border-color: #e48a9a !important; }
 /* the title: hand-drawn pixel letters, stacked on two lines, each dropping in */
 .intro-name { display: grid; justify-items: center; gap: 10px; font-size: 0; text-shadow: none; filter: drop-shadow(0 0 26px rgba(255,214,140,.28)) drop-shadow(0 6px 0 rgba(0,0,0,.3)); }
 .intro-line { display: flex; gap: 8px; }
+.intro-line.zh { gap: 14px; }
+.intro-line.zh img { height: 150px !important; }
 .intro-line img { display: block; height: 108px; image-rendering: pixelated; animation: letterIn .8s cubic-bezier(.2,1.6,.5,1) both; }
 .intro-tag { font-size: 20px; margin-top: 8px; }
 /* ---------------- work vibe reveal v2: the character in a glowing bubble, the words beside it ---------------- */
@@ -1065,3 +1070,9 @@ select.need { border-color: #e48a9a !important; }
 .vg-backs { grid-template-columns: repeat(5, 1fr); }
 .vg-back-card .fd.vg-mixed { left: 44px; top: 16px; transform: scale(.6) rotate(10deg); }
 .vg-back-card .fd:first-child { z-index: 1; }
+
+/* ---------------- Chinese build (html lang="zh-CN") ---------------- */
+/* handwriting: Caveat has no Chinese, so Chinese falls to Kaiti (楷体), the closest thing to a handwritten hand */
+html:lang(zh-CN) :is(.hand, .acc-quote, .mail-to, .mail-from, .mail-hand) { font-family: 'Caveat', 'Kaiti SC', 'STKaiti', 'KaiTi', 'Kaiti', cursive; }
+html:lang(zh-CN) .note.hand { font-size: 25px; }
+html:lang(zh-CN) .mail-hand { font-size: 25px; } html:lang(zh-CN) .mail-hand.body { font-size: 20px; line-height: 1.45; }

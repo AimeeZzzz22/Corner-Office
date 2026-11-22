@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { COMPANIES, COWORKERS, CoworkerId, HEART_POINTS } from './data';
+import { COMPANIES, COWORKERS, CoworkerId, HEART_POINTS, TaskType, TYPE_LABEL } from './data';
+import { ZH, t as tr } from './lang';
 import { Note, Past, Save } from './state';
 import { hhmm, officeClock, people, statusOf } from './clock';
 import { play, preloadTear, tear } from './sfx';
@@ -9,7 +10,7 @@ const A = `${import.meta.env.BASE_URL}assets/`;
 const tap = () => play('ui_tap', 0.4);
 const stageK = (el: Element | null) => { const st = el?.closest('.stage') as HTMLElement | null; return st ? st.getBoundingClientRect().width / 1280 : 1; };
 export const Head = ({ id, size = 40 }: { id: CoworkerId; size?: number }) => <span className="head" style={{ width: size, height: size }}><img src={`${A}heads/${id}.png`} alt="" /></span>;
-const STATUS = { working: 'Working', break: 'On a break', lunch: 'At lunch', meeting: 'In a meeting' } as const;
+const STATUS = { working: tr('Working', '工作中'), break: tr('On a break', '休息中'), lunch: tr('At lunch', '午饭中'), meeting: tr('In a meeting', '开会中') };
 const useClock = (scale: number, every = 1000) => {
   const [c, setC] = useState(() => officeClock(scale));
   useEffect(() => { const id = setInterval(() => setC(officeClock(scale)), every); return () => clearInterval(id); }, [scale, every]);
@@ -53,8 +54,8 @@ export function AvatarStack({ s }: { s: Save }) {
   const PAD = 16;  // names are wider than the heads: leave room for them on both sides when open
   const w = open ? n * openStep - (openStep - S) + PAD * 2 : (few - 1) * closedStep + S + (n > 4 ? closedStep : 0);
   return (
-    <button className={`card avatar-stack${open ? ' open' : ''}`} onClick={() => { tap(); setOpen(!open); }} aria-label="Who's in the office">
-      <span className="as-label">{open ? 'Your team' : 'In the office'}</span>
+    <button className={`card avatar-stack${open ? ' open' : ''}`} onClick={() => { tap(); setOpen(!open); }} aria-label={tr("Who's in the office", '谁在办公室')}>
+      <span className="as-label">{open ? tr('Your team', '你的团队') : tr('In the office', '在办公室')}</span>
       <span className="as-row" style={{ width: w, height: open ? S + 34 : S }}>
         {ids.map((id, i) => {
           const st = statusOf(id, clock), shown = open || i < few;
@@ -90,10 +91,10 @@ export function TeamAccordion({ s }: { s: Save }) {
             <div className="acc-open">
               <div className="row"><Head id={id} size={64} /><div><div className="pc-h">{c.name}</div><div className="sub">{c.role}</div></div></div>
               <span className={`pc-status ${st.kind}`}><i />{STATUS[st.kind]}</span>
-              <div className="acc-where">{st.kind === 'working' ? <>At their desk. {st.free !== null ? `Next break around ${hhmm(st.free)}.` : 'Working all day.'}</>
-                : st.kind === 'meeting' ? <>At {st.where}. Free around {hhmm(st.free!)}.</> : <>At {st.where}. Back around {hhmm(st.free!)}.</>}</div>
+              <div className="acc-where">{st.kind === 'working' ? <>{tr('At their desk. ', '在工位上。')}{st.free !== null ? (ZH ? `大约 ${hhmm(st.free)} 休息。` : `Next break around ${hhmm(st.free)}.`) : tr('Working all day.', '今天一直在工作。')}</>
+                : st.kind === 'meeting' ? <>{ZH ? `在${st.where}。大约 ${hhmm(st.free!)} 有空。` : `At ${st.where}. Free around ${hhmm(st.free!)}.`}</> : <>{ZH ? `在${st.where}。大约 ${hhmm(st.free!)} 回来。` : `At ${st.where}. Back around ${hhmm(st.free!)}.`}</>}</div>
               <div className="acc-hearts">{Array.from({ length: 10 }, (_, i) => <img key={i} src={`${A}${i < hearts ? 'heart' : 'heart_empty'}.png`} alt="" />)}</div>
-              <div className="sub">{s.hearts[id] % HEART_POINTS} / {HEART_POINTS} to the next heart · {s.ordersDone[id]} orders done for them</div>
+              <div className="sub">{ZH ? `离下一颗心 ${s.hearts[id] % HEART_POINTS} / ${HEART_POINTS} · 为TA完成了 ${s.ordersDone[id]} 张工作单` : `${s.hearts[id] % HEART_POINTS} / ${HEART_POINTS} to the next heart · ${s.ordersDone[id]} orders done for them`}</div>
               <div className="acc-quote">“{c.chat}”</div>
             </div>
           </div>);
@@ -165,7 +166,7 @@ const sameDay = (t: number) => new Date(t).toDateString() === new Date().toDateS
 export function weekStart(d = new Date()) { const x = new Date(d); x.setHours(0, 0, 0, 0); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x; }
 export const weekKey = (d = new Date()) => weekStart(d).toDateString();
 export const thisWeek = (h: Past[]) => { const w0 = weekStart().getTime(); return h.filter((p) => p.at >= w0); };
-export const fmtMins = (m: number) => (m >= 60 ? `${Math.floor(m / 60)} hr${m % 60 ? ` ${m % 60} min` : ''}` : `${m} min`);
+export const fmtMins = (m: number) => (ZH ? (m >= 60 ? `${Math.floor(m / 60)} 小时${m % 60 ? ` ${m % 60} 分钟` : ''}` : `${m} 分钟`) : m >= 60 ? `${Math.floor(m / 60)} hr${m % 60 ? ` ${m % 60} min` : ''}` : `${m} min`);
 export function PullSummary({ s, ready, earned, dayMax, treats, onWeek }: { s: Save; ready: number; earned: number; dayMax: number; treats: string[]; onWeek: () => void }) {
   const today = s.history.filter((h) => sameDay(h.at));
   const done = today.filter((h) => h.finished).length, mins = today.reduce((a, h) => a + h.worked, 0), coins = today.reduce((a, h) => a + h.coins, 0);
@@ -186,18 +187,18 @@ export function PullSummary({ s, ready, earned, dayMax, treats, onWeek }: { s: S
     <div className="pull-dim" style={{ opacity: t * 0.9, pointerEvents: open ? 'auto' : 'none' }} onClick={() => setH(CAP)} />
     <div className={`card pull${dragging ? ' drag' : ''}`} style={{ height: h, width: 300 + t * 120 }}>
       <div className="pull-cap" onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}>
-        <b>Today</b><span><span className="pix">{done}</span> order{done === 1 ? '' : 's'}</span><span><span className="pix">{mins}</span> min</span><span>{ready ? `${ready} pack${ready > 1 ? 's' : ''} ready` : `${hhmm(clock)}`}</span>
+        <b>{tr('Today', '今天')}</b><span><span className="pix">{done}</span>{ZH ? ' 张工作单' : ` order${done === 1 ? '' : 's'}`}</span><span><span className="pix">{mins}</span>{tr(' min', ' 分钟')}</span><span>{ready ? (ZH ? `${ready} 个卡包可开` : `${ready} pack${ready > 1 ? 's' : ''} ready`) : `${hhmm(clock)}`}</span>
       </div>
       <div className="pull-body" style={{ opacity: Math.max(0, t * 1.4 - 0.4) }}>
         <div className="pull-grid">
-          <div><span className="pix">{done}</span><small>{done === 1 ? 'order' : 'orders'} finished</small></div>
-          <div><span className="pix">{fmtMins(mins)}</span><small>focused</small></div>
-          <div><span className="pix">{coins}</span><small>coins earned</small></div>
+          <div><span className="pix">{done}</span><small>{ZH ? '张工作单完成' : `${done === 1 ? 'order' : 'orders'} finished`}</small></div>
+          <div><span className="pix">{fmtMins(mins)}</span><small>{tr('focused', '专注时长')}</small></div>
+          <div><span className="pix">{coins}</span><small>{tr('coins earned', '获得金币')}</small></div>
         </div>
-        <div className="pull-line"><b>Packs today</b><span className="pull-dots">{Array.from({ length: dayMax }, (_, i) => <i key={i} className={i < earned ? 'on' : ''} />)}</span><span className="sub">{earned} of {dayMax}</span></div>
-        <div className="pull-line"><b>Treats</b><span className="sub">{treats.length ? treats.join(', ') : 'None today. The bakery is open.'}</span></div>
-        <div className="pull-line"><b>Office time</b><span className="sub">{hhmm(clock)}</span></div>
-        <div className="row pull-foot"><button className="btn ghost" onClick={() => { tap(); setH(CAP); onWeek(); }}>See my week</button><span className="sub">Push up to close</span></div>
+        <div className="pull-line"><b>{tr('Packs today', '今日卡包')}</b><span className="pull-dots">{Array.from({ length: dayMax }, (_, i) => <i key={i} className={i < earned ? 'on' : ''} />)}</span><span className="sub">{earned} / {dayMax}</span></div>
+        <div className="pull-line"><b>{tr('Treats', '甜点')}</b><span className="sub">{treats.length ? treats.join(tr(', ', '、')) : tr('None today. The bakery is open.', '今天还没有。面包房开着呢。')}</span></div>
+        <div className="pull-line"><b>{tr('Office time', '办公室时间')}</b><span className="sub">{hhmm(clock)}</span></div>
+        <div className="row pull-foot"><button className="btn ghost" onClick={() => { tap(); setH(CAP); onWeek(); }}>{tr('See my week', '看看我这周')}</button><span className="sub">{tr('Push up to close', '向上推关闭')}</span></div>
       </div>
       <span className="pull-handle" />
     </div>
@@ -206,17 +207,17 @@ export function PullSummary({ s, ready, earned, dayMax, treats, onWeek }: { s: S
 
 // ---------------- a letter in the mail: tear the envelope open, the letter slides out and unfolds ----------------
 const THANKS: Partial<Record<CoworkerId, string>> = {
-  margaux: 'You make my lists shorter and my mornings calmer. That is rare. Keep it up.',
-  priya: 'Every order you finish is one less thing on my calendar. I noticed. Thank you.',
-  theo: 'I lost the tab again, but you never lose the thread. Thanks for keeping me on track.',
-  camille: 'I read your work out loud and heard no typos. That has never happened before.',
-  jonah: 'You got me unstuck more than once this week. Lunch is on me sometime.',
-  odette: 'I am so glad you said yes to the offer. The office is warmer with you in it.',
-  rio: 'You keep the studio moving. I saved you the good chair by the window.',
-  sam: 'Tiny wins add up. Yours add up fast. Thank you for all of them.',
-  ada: 'Clean, careful, on time. You make my job look easy.',
-  kofi: 'You showed up, you finished, you made it look calm. Teach me your ways.',
-  mei: 'Welcome to the team, properly this time. We are lucky to have you.',
+  margaux: tr('You make my lists shorter and my mornings calmer. That is rare. Keep it up.', '有你在，我的清单变短了，早上也平静多了。这很难得，继续保持。'),
+  priya: tr('Every order you finish is one less thing on my calendar. I noticed. Thank you.', '你每完成一张工作单，我的日程上就少一件事。我都看在眼里，谢谢你。'),
+  theo: tr('I lost the tab again, but you never lose the thread. Thanks for keeping me on track.', '我又把标签页弄丢了，可你从来不会断了思路。谢谢你帮我跟上节奏。'),
+  camille: tr('I read your work out loud and heard no typos. That has never happened before.', '我把你的稿子大声读了一遍，一个错字都没有。这可是头一回。'),
+  jonah: tr('You got me unstuck more than once this week. Lunch is on me sometime.', '这周你不止一次帮我解了围。改天请你吃午饭。'),
+  odette: tr('I am so glad you said yes to the offer. The office is warmer with you in it.', '真高兴你接受了录用。有你在，办公室都温暖了。'),
+  rio: tr('You keep the studio moving. I saved you the good chair by the window.', '是你让工作室转起来的。窗边那把好椅子我给你留着。'),
+  sam: tr('Tiny wins add up. Yours add up fast. Thank you for all of them.', '小小的进步会积少成多，你的积累得特别快。谢谢你做的每一件事。'),
+  ada: tr('Clean, careful, on time. You make my job look easy.', '干净、细心、准时。有你在，我的工作都变轻松了。'),
+  kofi: tr('You showed up, you finished, you made it look calm. Teach me your ways.', '你来了，你做完了，还做得那么从容。教教我吧。'),
+  mei: tr('Welcome to the team, properly this time. We are lucky to have you.', '这次正式地说一声：欢迎加入团队。有你是我们的幸运。'),
 };
 type MailStage = 'in' | 'out' | 'read';
 export function MailLetter({ note, name, s, keep }: { note: Note; name: string; s: Save; keep: (n: Note, week?: boolean) => void }) {
@@ -232,35 +233,35 @@ export function MailLetter({ note, name, s, keep }: { note: Note; name: string; 
           <div className="mail-paper">
             <div className="mail-fold top" />
             {note.kind === 'thanks' && from ? <>
-              <div className="mail-hand">Dear {name},</div>
-              <p className="mail-hand body">{THANKS[note.from!] ?? 'Thank you for all your help. It means a lot.'}</p>
-              <div className="mail-hearts">{Array.from({ length: note.level }, (_, i) => <img key={i} src={`${A}heart.png`} alt="" />)}<span className="sub">{note.level} heart{note.level > 1 ? 's' : ''} with {from.name}</span></div>
+              <div className="mail-hand">{ZH ? `亲爱的${name}：` : `Dear ${name},`}</div>
+              <p className="mail-hand body">{THANKS[note.from!] ?? tr('Thank you for all your help. It means a lot.', '谢谢你的帮助，这对我意义重大。')}</p>
+              <div className="mail-hearts">{Array.from({ length: note.level }, (_, i) => <img key={i} src={`${A}heart.png`} alt="" />)}<span className="sub">{ZH ? `和${from.name}的 ${note.level} 颗心` : `${note.level} heart${note.level > 1 ? 's' : ''} with ${from.name}`}</span></div>
               <div className="mail-hand mail-sign">— {from.name}</div>
             </> : <>
-              <div className="mail-co pix">{co.name} · Payday</div>
-              <p className="mail-hand body">Dear {name}, here is a little extra for this week: {wDone} orders and {fmtMins(wMins)} of focus. Have a lovely weekend.</p>
+              <div className="mail-co pix">{co.name}{tr(' · Payday', ' · 发薪日')}</div>
+              <p className="mail-hand body">{ZH ? `亲爱的${name}，这是这周的一点额外奖励：${wDone} 张工作单，专注了 ${fmtMins(wMins)}。周末愉快！` : `Dear ${name}, here is a little extra for this week: ${wDone} orders and ${fmtMins(wMins)} of focus. Have a lovely weekend.`}</p>
               <div className="mail-pay"><img src={`${A}coin.png`} alt="" /><span className="pix">+{note.coins}</span></div>
-              <div className="mail-hand mail-sign">— {COWORKERS[co.host].name}, for everyone at {co.name}</div>
+              <div className="mail-hand mail-sign">— {ZH ? `${COWORKERS[co.host].name}，代表${co.name}全体` : `${COWORKERS[co.host].name}, for everyone at ${co.name}`}</div>
             </>}
           </div>
         </div>
         <div className="mail-env" {...handlers}>
-          <div className="mail-front"><span className="mail-to">To: {name}</span><span className="mail-from">{from ? `From ${from.name}` : `From ${co.name}`}</span><span className="mail-stamp">{note.kind === 'payday' ? '¢' : '♥'}</span></div>
+          <div className="mail-front"><span className="mail-to">{tr('To: ', '收件人：')}{name}</span><span className="mail-from">{tr('From ', '寄件人：')}{from ? from.name : co.name}</span><span className="mail-stamp">{note.kind === 'payday' ? '¢' : '♥'}</span></div>
           <div className={`mail-strip${snap ? ' snap' : ''}`} style={{ ['--p' as string]: p }}><span className="mail-attached" /><span className="mail-torn" /></div>
-          {stage === 'in' && <span className="mail-grab" style={{ opacity: p > 0.05 ? 0 : 1 }}>pull ➜</span>}
+          {stage === 'in' && <span className="mail-grab" style={{ opacity: p > 0.05 ? 0 : 1 }}>{tr('pull ➜', '拉 ➜')}</span>}
         </div>
       </div>
-      <div className="mail-hint">{stage === 'in' ? 'Drag the strip to open it, or just click the envelope.' : ' '}</div>
+      <div className="mail-hint">{stage === 'in' ? tr('Drag the strip to open it, or just click the envelope.', '拖动封条打开，或者直接点信封。') : ' '}</div>
       {stage === 'read' && <div className="row mail-btns">
-        <button className="btn primary" onClick={() => { tap(); keep(note); }}>{note.kind === 'payday' ? `Add ${note.coins} coins` : 'Keep the note'}</button>
-        {note.kind === 'payday' && <button className="btn ghost" onClick={() => { tap(); keep(note, true); }}>Add and see my week</button>}
+        <button className="btn primary" onClick={() => { tap(); keep(note); }}>{note.kind === 'payday' ? (ZH ? `收下 ${note.coins} 金币` : `Add ${note.coins} coins`) : tr('Keep the note', '收好这封信')}</button>
+        {note.kind === 'payday' && <button className="btn ghost" onClick={() => { tap(); keep(note, true); }}>{tr('Add and see my week', '收下并看看我这周')}</button>}
       </div>}
     </div>
   );
 }
 
 // ---------------- the weekly recap: a 3D runway you scroll down ----------------
-const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const DAYS = ZH ? ['一', '二', '三', '四', '五', '六', '日'] : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 export function WeekRecap({ s, name, close }: { s: Save; name: string; close: () => void }) {
   const box = useRef<HTMLDivElement>(null);
   const [y, setY] = useState(0);
@@ -272,16 +273,16 @@ export function WeekRecap({ s, name, close }: { s: Save; name: string; close: ()
   const types: Record<string, number> = {}; week.forEach((h) => { types[h.type] = (types[h.type] ?? 0) + h.worked; });
   const topType = Object.entries(types).sort((a, b) => b[1] - a[1])[0];
   const SLABS = [
-    { col: '#5b6cff', title: 'Focus', body: <><div className="wr-big pix">{fmtMins(mins)}</div><div className="wr-bars">{byDay.map((m, i) => <span key={i}><i style={{ height: `${(m / top) * 100}%` }} /><small>{DAYS[i]}</small></span>)}</div></> },
-    { col: '#9b5cf0', title: 'Orders', body: <><div className="wr-big pix">{done.length}</div><div className="wr-sub">finished{week.length - done.length ? `, and ${week.length - done.length} good stopping points` : ''}</div>{topType && <div className="wr-sub">Mostly {topType[0].toLowerCase()}</div>}</> },
-    { col: '#f07a3c', title: 'Friends', body: friends.length ? <div className="wr-friends">{friends.slice(0, 3).map(([id, n]) => <span key={id}><Head id={id} size={54} /><b>{COWORKERS[id].name}</b><small>{n} order{n > 1 ? 's' : ''}</small></span>)}</div> : <div className="wr-sub">Take an order for a coworker to start a friendship.</div> },
-    { col: '#e94b8a', title: 'Coins', body: <><div className="wr-big pix">+{coins}</div><div className="wr-sub">You have {s.coins.toLocaleString()} now</div></> },
+    { col: '#5b6cff', title: tr('Focus', '专注'), body: <><div className="wr-big pix">{fmtMins(mins)}</div><div className="wr-bars">{byDay.map((m, i) => <span key={i}><i style={{ height: `${(m / top) * 100}%` }} /><small>{DAYS[i]}</small></span>)}</div></> },
+    { col: '#9b5cf0', title: tr('Orders', '工作单'), body: <><div className="wr-big pix">{done.length}</div><div className="wr-sub">{ZH ? `张完成${week.length - done.length ? `，还有 ${week.length - done.length} 次恰好的暂停` : ''}` : `finished${week.length - done.length ? `, and ${week.length - done.length} good stopping points` : ''}`}</div>{topType && <div className="wr-sub">{ZH ? `主要是${TYPE_LABEL[topType[0] as TaskType]}` : `Mostly ${topType[0].toLowerCase()}`}</div>}</> },
+    { col: '#f07a3c', title: tr('Friends', '朋友'), body: friends.length ? <div className="wr-friends">{friends.slice(0, 3).map(([id, n]) => <span key={id}><Head id={id} size={54} /><b>{COWORKERS[id].name}</b><small>{ZH ? `${n} 张工作单` : `${n} order${n > 1 ? 's' : ''}`}</small></span>)}</div> : <div className="wr-sub">{tr('Take an order for a coworker to start a friendship.', '帮同事接一张工作单，开始一段友谊吧。')}</div> },
+    { col: '#e94b8a', title: tr('Coins', '金币'), body: <><div className="wr-big pix">+{coins}</div><div className="wr-sub">{ZH ? `现在共有 ${s.coins.toLocaleString()} 金币` : `You have ${s.coins.toLocaleString()} now`}</div></> },
   ];
   const STEP = 520, total = (SLABS.length - 1) * STEP;
   return (
     <div className="wr" ref={box} onScroll={(e) => setY((e.currentTarget as HTMLDivElement).scrollTop)}>
       <div className="wr-sticky">
-        <div className="wr-head"><div className="pix">{name}'s week at {co.name}</div><button className="bb-x" onClick={() => { tap(); close(); }} aria-label="Close">✕</button></div>
+        <div className="wr-head"><div className="pix">{ZH ? `${name}在${co.name}的一周` : `${name}'s week at ${co.name}`}</div><button className="bb-x" onClick={() => { tap(); close(); }} aria-label={tr("Close", "关闭")}>✕</button></div>
         <div className="wr-view">
           <div className="wr-track" style={{ transform: `rotateX(58deg) translateY(${-Math.min(y, total)}px)` }}>
             {SLABS.map((sl, i) => { const d = Math.abs(y - i * STEP) / STEP; return (
@@ -296,7 +297,7 @@ export function WeekRecap({ s, name, close }: { s: Save; name: string; close: ()
           <div key={i} className="wr-board" style={{ ['--c' as string]: sl.col }}>
             <div className="wr-title"><i />{sl.title}<span>{i + 1} / {SLABS.length}</span></div>{sl.body}
           </div>); })()}
-        <div className="wr-foot">{y < total - 10 ? 'Scroll to walk down your week ↓' : 'That was your week. See you Monday.'}</div>
+        <div className="wr-foot">{y < total - 10 ? tr('Scroll to walk down your week ↓', '向下滚动，回顾你的一周 ↓') : tr('That was your week. See you Monday.', '这就是你的一周。周一见！')}</div>
       </div>
       <div style={{ height: total }} />
     </div>

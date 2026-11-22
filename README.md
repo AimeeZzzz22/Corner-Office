@@ -2,6 +2,8 @@
 
 **Play it:** https://aimeezzzz22.github.io/Corner-Office/
 
+**中文版:** https://aimeezzzz22.github.io/Corner-Office-Chinese/ (same code, built with `npm run build:zh`; repo: Corner-Office-Chinese)
+
 The playable build lives in `docs/` (served by GitHub Pages). To update it, run `npm run build` and copy `dist/` into `docs/`.
 
 A first playable slice of Corner Office, with both offices: Stitchlight and Moonpuff Studio.
@@ -14,6 +16,7 @@ You need Node.js 18 or newer.
 npm install
 npm run dev      # opens a local dev server
 npm run build    # builds the static site into dist/
+npm run build:zh # builds the Chinese site into dist-zh/
 ```
 
 ## What is in the demo

@@ -1,3 +1,4 @@
+import { ZH, t as tr } from './lang';
 import { useEffect, useRef } from 'react';
 import { DIR_COL } from './look';
 
@@ -131,7 +132,7 @@ export default function VibeAnim({ id, sheet }: { id: string; sheet: HTMLCanvasE
           pz([Math.floor(d * 7) % 2 ? 'dizzyA' : 'dizzyB'], -24, -18 * S + 4, [9, 19]);
           x.restore();
           for (let i = 0; i < 3; i++) { const a = d * 5 + (i * Math.PI * 2) / 3; star(cx - 6 + Math.cos(a) * 30 + wob * 40, seatY - 64 + Math.sin(a) * 7, 13, Math.sin(a) > -0.6 ? 1 : 0.5); }
-          text('whoa…', cx + 26, seatY - 60, 12, Math.min(1, d * 2) * (d < 1.8 ? 1 : 1 - (d - 1.8) * 1.7));
+          text(tr('whoa…', '哇…'), cx + 26, seatY - 60, 12, Math.min(1, d * 2) * (d < 1.8 ? 1 : 1 - (d - 1.8) * 1.7));
         }
         box(cx - 24, seatY, 48, 9, '#5c5672');
         if (dir === 'back') chairBack();
@@ -183,10 +184,10 @@ export default function VibeAnim({ id, sheet }: { id: string; sheet: HTMLCanvasE
         }
         BITE.forEach((b, k) => {
           const d = cyc - b; if (d < 0 || d > 0.6) return;
-          text('nom', cx + 30 + (k % 2) * 8, ground - 76 - d * 20, 13, 1 - d / 0.6);
+          text(tr('nom', '啊呜'), cx + 30 + (k % 2) * 8, ground - 76 - d * 20, 13, 1 - d / 0.6);
           x.fillStyle = '#c8873a'; for (let i = 0; i < 3; i++) x.fillRect(cx + 4 + i * 6 + k * 3, ground - 50 + d * (40 + i * 14), 3, 3);
         });
-        if (happy) { text('♥', cx + 22, ground - 92 - (cyc - 3.15) * 14, 14, 1, '#ff6b8b'); text('yum!', cx + 30, ground - 70, 13, 1); }
+        if (happy) { text('♥', cx + 22, ground - 92 - (cyc - 3.15) * 14, 14, 1, '#ff6b8b'); text(tr('yum!', '好吃!'), cx + 30, ground - 70, 13, 1); }
       } else if (id === 'scroller') {
         // phone in both hands, thumb flicking up; then the phone zooms in and you see the video: someone dancing
         const cyc = t % 7.6;
@@ -229,8 +230,8 @@ export default function VibeAnim({ id, sheet }: { id: string; sheet: HTMLCanvasE
         else if (cyc < 2.45) { mods = ['up', 'closed']; lift = 3; const h = (cyc - 0.25) / 2.2; a = Math.sin(h * Math.PI * 2) * 0.12; }
         else if (cyc < 2.7) mods = ['mid'];
         x.save(); x.translate(cx, ground); x.rotate(a); pz(mods, -24, -96 - lift); x.restore();
-        if (cyc > 0.4 && cyc < 2.4) { text('mmmh…', cx + 30, ground - 104, 12, 1); for (let i = 0; i < 3; i++) { const q = cyc * 3 + i * 2.1; star(cx - 6 + Math.cos(q) * 40, ground - 112 + Math.sin(q) * 8, 11); } }
-        if (cyc > 2.8 && cyc < 3.6) text('ahh', cx + 26, ground - 92, 12, 1 - (cyc - 2.8) / 0.8);
+        if (cyc > 0.4 && cyc < 2.4) { text(tr('mmmh…', '嗯~…'), cx + 30, ground - 104, 12, 1); for (let i = 0; i < 3; i++) { const q = cyc * 3 + i * 2.1; star(cx - 6 + Math.cos(q) * 40, ground - 112 + Math.sin(q) * 8, 11); } }
+        if (cyc > 2.8 && cyc < 3.6) text(tr('ahh', '啊~'), cx + 26, ground - 92, 12, 1 - (cyc - 2.8) / 0.8);
       } else if (id === 'plant') {
         // chatting to the desk plant... until it shoots up and answers back.
         // The character jumps with a "!", then they trade hearts, and the plant shrinks back as if nothing happened.
@@ -249,7 +250,7 @@ export default function VibeAnim({ id, sheet }: { id: string; sheet: HTMLCanvasE
             const a2 = Math.min(1, (cyc - 3.0) * 5) * (cyc > 4.3 ? 1 - (cyc - 4.3) / 0.3 : 1);
             x.globalAlpha = a2; box(fx2 - 70, fy - 46, 60, 22, '#ffffff', INK, 2); x.fillStyle = '#ffffff'; x.fillRect(fx2 - 22, fy - 26, 8, 6);
             x.fillStyle = INK; x.fillRect(fx2 - 16, fy - 22, 2, 4); x.globalAlpha = 1;
-            text('You too!', fx2 - 66, fy - 30, 12, a2);
+            text(tr('You too!', '你也是!'), fx2 - (ZH ? 52 : 66), fy - 30, 12, a2);
           }
         }
         if (cyc > 3.2 && cyc < 4.4) { text('!', cx - 46, ground - 74 - jump, 22, 1, '#e8504a'); if (cyc > 3.7) { x.fillStyle = '#8fd0f0'; x.fillRect(cx - 30, ground - 62 + (cyc - 3.7) * 10, 4, 6); } }

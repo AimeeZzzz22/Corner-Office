@@ -1,3 +1,4 @@
+import { t } from './lang';
 // ---------------- where things can go on the player's desk ----------------
 // All numbers are in the desk picture's own pixels (1280 x 832, public/assets/ob/starter/back.png).
 // A slot's [x, y] is where the bottom-middle of an item stands. Each slot has a kind: what sort of place it is.
@@ -34,12 +35,12 @@ export interface DeskItem {
   starter?: boolean;                        // one of the first-day gifts on the desk (default yes)
 }
 export const ITEMS: DeskItem[] = [
-  { id: 'lamp', name: 'Desk lamp', line: 'A warm little lamp for late study sessions.', box: [356, 456, 64, 72], fits: ['desk'], home: 'desk-l1' },
-  { id: 'clipboard', name: 'Clipboard', line: 'For your plans and tiny to-do lists.', box: [492, 428, 64, 36], fits: ['desk', 'shelf'], home: 'desk-l3' },
-  { id: 'piggy', name: 'Glass piggy bank', line: 'It fills up with coins as you finish work orders.', box: [742, 412, 60, 48], fits: ['desk', 'shelf'], home: 'desk-r1' },
-  { id: 'phone', name: 'Desk phone', line: 'A classic desk phone. Very good for looking busy.', box: [878, 496, 52, 32], fits: ['desk'], home: 'desk-r3' },
+  { id: 'lamp', name: t('Desk lamp', '台灯'), line: t('A warm little lamp for late study sessions.', '一盏暖暖的小台灯，陪你熬夜学习。'), box: [356, 456, 64, 72], fits: ['desk'], home: 'desk-l1' },
+  { id: 'clipboard', name: t('Clipboard', '写字板'), line: t('For your plans and tiny to-do lists.', '用来写计划和小小的待办清单。'), box: [492, 428, 64, 36], fits: ['desk', 'shelf'], home: 'desk-l3' },
+  { id: 'piggy', name: t('Glass piggy bank', '玻璃存钱罐'), line: t('It fills up with coins as you finish work orders.', '每完成一张工作单，它就会多装一些金币。'), box: [742, 412, 60, 48], fits: ['desk', 'shelf'], home: 'desk-r1' },
+  { id: 'phone', name: t('Desk phone', '座机电话'), line: t('A classic desk phone. Very good for looking busy.', '一部经典座机。装忙的好帮手。'), box: [878, 496, 52, 32], fits: ['desk'], home: 'desk-r3' },
   // the welcome surprise found in the office after onboarding
-  { id: 'smile_mug', name: 'Smiley mug', line: 'A coffee mug that is always happy to see you.', box: [432, 455, 44, 40], fits: ['desk', 'shelf'], home: 'desk-l2', starter: false },
+  { id: 'smile_mug', name: t('Smiley mug', '笑脸马克杯'), line: t('A coffee mug that is always happy to see you.', '一只每次见到你都很开心的咖啡杯。'), box: [432, 455, 44, 40], fits: ['desk', 'shelf'], home: 'desk-l2', starter: false },
 ];
 
 export const STARTER = ITEMS.filter((i) => i.starter !== false);

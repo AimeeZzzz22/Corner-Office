@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { t } from './lang';
 import { COWORKERS, Company, CoworkerId } from './data';
 import { officeClock } from './clock';
 
@@ -133,7 +134,7 @@ export default function Office({ onCoworker, frozen, menu, editing, labels, onLa
   // every place with a bubble: mini-games, the treat counter, the fridge, and the welcome gift while it's waiting
   type Spot = { name: string; at: [number, number]; stand: [number, number]; kind: 'game' | 'food' | 'fridge' | 'surprise' };
   const allSpots = (): Spot[] => [...co.games.map((g) => ({ ...g, kind: 'game' as const })), { ...co.food, kind: 'food' },
-    { ...co.fridge, name: extrasRef.current?.fridge ? 'Something in the fridge!' : 'The fridge', kind: 'fridge' }, ...(extrasRef.current?.surprise ? [{ ...co.surprise, kind: 'surprise' as const }] : [])];
+    { ...co.fridge, name: extrasRef.current?.fridge ? t('Something in the fridge!', '冰箱里有东西！') : t('The fridge', '冰箱'), kind: 'fridge' }, ...(extrasRef.current?.surprise ? [{ ...co.surprise, kind: 'surprise' as const }] : [])];
   const arriveRef = useRef(onTourArrive); arriveRef.current = onTourArrive; const scaleRef = useRef(clockScale); scaleRef.current = clockScale;
   const innerRef = useRef<HTMLDivElement>(null);
   const meetRef = useRef<((n: Npc) => void) | null>(null);
@@ -531,10 +532,10 @@ export default function Office({ onCoworker, frozen, menu, editing, labels, onLa
       {bubble && (
         <div className={bubble.kind === 'game' || (bubble.kind === 'fridge' && !extras?.fridge) ? 'spot-bubble' : 'spot-bubble act'} style={{ left: `${(bubble.x / 512) * 100}%`, top: `${((bubble.y - (bubble.kind === 'surprise' ? 18 : 22)) / 352) * 100}%` }}>
           <b>{bubble.name}</b>
-          {bubble.kind === 'game' && <span>Coming soon in the demo</span>}
-          {bubble.kind === 'food' && <button className="bubble-btn" onClick={() => onSpot?.('food')}>See the menu</button>}
-          {bubble.kind === 'fridge' && (extras?.fridge ? <button className="bubble-btn" onClick={() => onSpot?.('fridge')}>Take a look</button> : <span>Just milk and someone's lunch today.</span>)}
-          {bubble.kind === 'surprise' && <button className="bubble-btn" onClick={() => onSpot?.('surprise')}>Open it</button>}
+          {bubble.kind === 'game' && <span>{t('Coming soon in the demo', '演示版即将推出')}</span>}
+          {bubble.kind === 'food' && <button className="bubble-btn" onClick={() => onSpot?.('food')}>{t('See the menu', '看看菜单')}</button>}
+          {bubble.kind === 'fridge' && (extras?.fridge ? <button className="bubble-btn" onClick={() => onSpot?.('fridge')}>{t('Take a look', '看一看')}</button> : <span>{t("Just milk and someone's lunch today.", '今天只有牛奶和某人的午饭。')}</span>)}
+          {bubble.kind === 'surprise' && <button className="bubble-btn" onClick={() => onSpot?.('surprise')}>{t('Open it', '打开')}</button>}
         </div>
       )}
     </div></div>

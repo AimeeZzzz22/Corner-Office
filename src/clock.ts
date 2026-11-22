@@ -1,4 +1,5 @@
 import { COMPANIES, COWORKERS, CompanyId, CoworkerId, Trip } from './data';
+import { ZH, t as tr } from './lang';
 
 // The office clock, in minutes since midnight (it keeps counting past 1440 on later days). It follows the real clock,
 // and runs faster while Fast demo time is on. It is shared, so the office and the desk computer agree on the time.
@@ -16,7 +17,8 @@ export function tripAt(id: CoworkerId, clock: number): { trip: Trip; ends: numbe
 
 // what a coworker is up to right now, for the desk computer
 const MEETING = new Set(['editorial', 'idea_wall', 'colab']);
-const PLACE: Record<string, string> = { pantry: 'the pantry', lounge: 'the lounge', bakery: 'Bobbin Bakery', reception: 'reception', editorial: 'the editorial floor', closet: 'the fashion closet',
+const PLACE: Record<string, string> = ZH ? { pantry: '茶水间', lounge: '休息区', bakery: '线轴面包房', reception: '前台', editorial: '编辑部', closet: '时装间',
+  kitchen: '厨房', colab: '协作室', game_room: '游戏室', arcade: '街机角', idea_wall: '点子墙', booth: '入口小亭' } : { pantry: 'the pantry', lounge: 'the lounge', bakery: 'Bobbin Bakery', reception: 'reception', editorial: 'the editorial floor', closet: 'the fashion closet',
   kitchen: 'the kitchen', colab: 'the co-lab', game_room: 'the game room', arcade: 'the arcade nook', idea_wall: 'the idea wall', booth: 'the entrance booth' };
 export type Status = { kind: 'working' | 'break' | 'meeting' | 'lunch'; where: string; free: number | null };
 export function statusOf(id: CoworkerId, clock: number): Status {
@@ -26,7 +28,7 @@ export function statusOf(id: CoworkerId, clock: number): Status {
     return { kind, where: PLACE[trip.to] ?? trip.to, free: ends };
   }
   // at their desk working: free at their next break (look ahead minute by minute, up to a day)
-  for (let m = Math.ceil(clock); m < clock + 1440; m++) { const t = tripAt(id, m); if (t) return { kind: 'working', where: 'their desk', free: m }; }
-  return { kind: 'working', where: 'their desk', free: null };
+  for (let m = Math.ceil(clock); m < clock + 1440; m++) { const t = tripAt(id, m); if (t) return { kind: 'working', where: tr('their desk', '自己的工位'), free: m }; }
+  return { kind: 'working', where: tr('their desk', '自己的工位'), free: null };
 }
 export const people = (co: CompanyId) => COMPANIES[co].people.filter((p) => !COWORKERS[p].pet);

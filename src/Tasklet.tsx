@@ -5,6 +5,7 @@ import { hhmm, officeClock, people, statusOf } from './clock';
 import { COMPANIES, COWORKERS, CoworkerId, pay } from './data';
 import { Save } from './state';
 import { play } from './sfx';
+import { ZH, t as tx } from './lang';
 
 const A = `${import.meta.env.BASE_URL}assets/`;
 const tap = () => play('ui_tap', 0.4);
@@ -12,7 +13,7 @@ const Head = ({ id, size = 28 }: { id: CoworkerId; size?: number }) => <span cla
 const when = (t: number) => {
   const d = new Date(t), now = new Date(), same = (a: Date, b: Date) => a.toDateString() === b.toDateString();
   const y = new Date(now); y.setDate(now.getDate() - 1);
-  const day = same(d, now) ? 'Today' : same(d, y) ? 'Yesterday' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  const day = same(d, now) ? tx('Today', '今天') : same(d, y) ? tx('Yesterday', '昨天') : ZH ? `${d.getMonth() + 1}月${d.getDate()}日` : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
   return `${day} · ${d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
 };
 
@@ -24,32 +25,32 @@ type Tab = 'new' | 'past' | 'team';
 export default function Computer({ s, name, close, take, openShop }: { s: Save; name: string; close: () => void; take: (p: Pick) => void; openShop: (t: 'shop' | 'blind') => void }) {
   const [app, setApp] = useState<Tab | null>(null);
   const ready = piggyToday(s.blind).ready;
-  const co = COMPANIES[s.company], os = s.company === 'stitchlight' ? 'Stitch Desk' : 'PuffOS';
+  const co = COMPANIES[s.company], os = s.company === 'stitchlight' ? tx('Stitch Desk', '织光桌面') : tx('PuffOS', '月芙系统');
   const clock = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
   return (
     <div className="pc-dim">
       <div className="pc">
         <div className="pc-bezel">
           <div className="pc-screen">
-            <div className="pc-top"><span className="pix">{os}</span><span>{name}'s desk · {co.name}</span><span>{clock}</span></div>
+            <div className="pc-top"><span className="pix">{os}</span><span>{ZH ? `${name}的工位 · ${co.name}` : `${name}'s desk · ${co.name}`}</span><span>{clock}</span></div>
             <div className="pc-desktop">
               <button className="pc-icon" onClick={() => { tap(); setApp('new'); }}>
-                <span className="pc-icon-img"><i /><i /><i /></span><span>Tasklet</span>{/* a number badge here is kept for later: messages from coworkers, not orders you haven't taken */}
+                <span className="pc-icon-img"><i /><i /><i /></span><span>{tx('Tasklet', '任务夹')}</span>{/* a number badge here is kept for later: messages from coworkers, not orders you haven't taken */}
               </button>
             </div>
             {app && <Tasklet key={app} s={s} name={name} tab0={app} close={() => { tap(); setApp(null); }} take={take} />}
             <MagnifyDock open={(k) => (k === 'shop' || k === 'blind' ? openShop(k) : setApp(k as Tab))} apps={[
-              { key: 'new', label: 'Tasklet', icon: '📥', bg: '#f6d37a', badge: s.tray.length },
-              { key: 'team', label: 'Coworkers', icon: '👥', bg: '#a7d8b8' },
-              { key: 'past', label: 'Past orders', icon: '🗂', bg: '#b9c7f2' },
-              { key: 'blind', label: 'Blind packs', icon: '🎁', bg: '#d9c6f4', badge: ready },
-              { key: 'shop', label: 'Shop', icon: '🛍', bg: '#f6b9cb' },
+              { key: 'new', label: tx('Tasklet', '任务夹'), icon: '📥', bg: '#f6d37a', badge: s.tray.length },
+              { key: 'team', label: tx('Coworkers', '同事'), icon: '👥', bg: '#a7d8b8' },
+              { key: 'past', label: tx('Past orders', '历史工作单'), icon: '🗂', bg: '#b9c7f2' },
+              { key: 'blind', label: tx('Blind packs', '盲包'), icon: '🎁', bg: '#d9c6f4', badge: ready },
+              { key: 'shop', label: tx('Shop', '商店'), icon: '🛍', bg: '#f6b9cb' },
             ]} />
           </div>
         </div>
         <div className="pc-stand" />
       </div>
-      <button className="btn ghost pc-leave" onClick={() => { tap(); close(); }}>← Leave the computer</button>
+      <button className="btn ghost pc-leave" onClick={() => { tap(); close(); }}>{tx('← Leave the computer', '← 离开电脑')}</button>
     </div>
   );
 }
@@ -63,59 +64,59 @@ function Tasklet({ s, name, close, take, tab0 }: { s: Save; name: string; close:
   const done = s.history.filter((h) => h.finished).length, mins = s.history.reduce((a, h) => a + h.worked, 0), coins = s.history.reduce((a, h) => a + h.coins, 0);
   return (
             <div className="pc-win">
-              <div className="pc-title"><i /><i /><i /><b>Tasklet</b><button className="pc-x" onClick={close} aria-label="Close Tasklet">✕</button></div>
+              <div className="pc-title"><i /><i /><i /><b>{tx('Tasklet', '任务夹')}</b><button className="pc-x" onClick={close} aria-label={tx('Close Tasklet', '关闭任务夹')}>✕</button></div>
               <div className="pc-body">
                 <div className="pc-side">
                   <SideBlob tab={tab} />
-                  <button data-t="new" className={tab === 'new' ? 'on' : ''} onClick={() => { tap(); setTab('new'); }}>📥 New orders <em>{s.tray.length}</em></button>
-                  <button data-t="past" className={tab === 'past' ? 'on' : ''} onClick={() => { tap(); setTab('past'); }}>🗂 Past orders <em>{s.history.length}</em></button>
-                  <button data-t="team" className={tab === 'team' ? 'on' : ''} onClick={() => { tap(); setTab('team'); }}>👥 Coworkers</button>
+                  <button data-t="new" className={tab === 'new' ? 'on' : ''} onClick={() => { tap(); setTab('new'); }}>📥 {tx('New orders', '新工作单')} <em>{s.tray.length}</em></button>
+                  <button data-t="past" className={tab === 'past' ? 'on' : ''} onClick={() => { tap(); setTab('past'); }}>🗂 {tx('Past orders', '历史工作单')} <em>{s.history.length}</em></button>
+                  <button data-t="team" className={tab === 'team' ? 'on' : ''} onClick={() => { tap(); setTab('team'); }}>👥 {tx('Coworkers', '同事')}</button>
                   <div className="pc-stats">
-                    <div><b>{done}</b><span>finished</span></div>
-                    <div><b>{mins >= 60 ? `${Math.floor(mins / 60)} hr${mins % 60 ? ` ${mins % 60} min` : ''}` : `${mins} min`}</b><span>focused</span></div>
-                    <div><b>{coins.toLocaleString()}</b><span>coins earned</span></div>
+                    <div><b>{done}</b><span>{tx('finished', '已完成')}</span></div>
+                    <div><b>{ZH ? (mins >= 60 ? `${Math.floor(mins / 60)} 小时${mins % 60 ? ` ${mins % 60} 分` : ''}` : `${mins} 分钟`) : mins >= 60 ? `${Math.floor(mins / 60)} hr${mins % 60 ? ` ${mins % 60} min` : ''}` : `${mins} min`}</b><span>{tx('focused', '专注时间')}</span></div>
+                    <div><b>{coins.toLocaleString()}</b><span>{tx('coins earned', '赚到的金币')}</span></div>
                   </div>
                 </div>
                 <div className="pc-main">
                   {tab === 'new' && <>
-                    <div className="pc-h">New orders for {name}</div>
-                    <div className="sub">Pick one and set your focus. {name} does the order while you work on your own thing.</div>
+                    <div className="pc-h">{ZH ? `给${name}的新工作单` : `New orders for ${name}`}</div>
+                    <div className="sub">{ZH ? `选一张，再设定你要专注做的事。你忙自己的事时，${name}会去完成这张工作单。` : `Pick one and set your focus. ${name} does the order while you work on your own thing.`}</div>
                     <div className="pc-list">
                       {s.tray.map((t) => { const c = COWORKERS[t.who]; return (
                         <div key={t.mins} className="pc-row">
-                          <div className="pc-mins pix">{t.mins}<small>min</small></div>
+                          <div className="pc-mins pix">{t.mins}<small>{tx('min', '分钟')}</small></div>
                           <Head id={t.who} size={34} />
-                          <div className="pc-what"><b>{c.jobs[t.job].title}</b><span>For {c.name} · {c.role}</span></div>
-                          {s.quiz.focus === t.mins && <span className="suits static">Suits you</span>}
-                          <div className="pc-pay">+{pay(t.mins)} coins<br /><span>+1/10 heart</span></div>
-                          <button className="btn primary pc-take" onClick={() => { tap(); take({ mins: t.mins, who: t.who, job: t.job }); }}>Take</button>
+                          <div className="pc-what"><b>{c.jobs[t.job].title}</b><span>{ZH ? `帮${c.name} · ${c.role}` : `For ${c.name} · ${c.role}`}</span></div>
+                          {s.quiz.focus === t.mins && <span className="suits static">{tx('Suits you', '适合你')}</span>}
+                          <div className="pc-pay">+{pay(t.mins)} {tx('coins', '金币')}<br /><span>{tx('+1/10 heart', '+1/10 颗心')}</span></div>
+                          <button className="btn primary pc-take" onClick={() => { tap(); take({ mins: t.mins, who: t.who, job: t.job }); }}>{tx('Take', '接单')}</button>
                         </div>); })}
                       <div className="pc-row own">
-                        <div className="pc-mins pix">{own}<small>min</small></div>
+                        <div className="pc-mins pix">{own}<small>{tx('min', '分钟')}</small></div>
                         <span className="head blank" style={{ width: 34, height: 34 }}>⏱</span>
-                        <div className="pc-what"><b>Set your own time</b><span>5 to 120 minutes · no coworker, so no heart</span>
+                        <div className="pc-what"><b>{tx('Set your own time', '自己定时间')}</b><span>{tx('5 to 120 minutes · no coworker, so no heart', '5 到 120 分钟 · 不帮同事，所以没有心')}</span>
                           <span className="pc-steps"><button onClick={() => { tap(); setOwn(Math.max(5, own - 5)); }}>−</button><button onClick={() => { tap(); setOwn(Math.min(120, own + 5)); }}>+</button></span></div>
-                        <div className="pc-pay">+{pay(own)} coins<br /><span>no heart</span></div>
-                        <button className="btn primary pc-take" onClick={() => { tap(); take({ mins: own, who: null, job: 0 }); }}>Take</button>
+                        <div className="pc-pay">+{pay(own)} {tx('coins', '金币')}<br /><span>{tx('no heart', '没有心')}</span></div>
+                        <button className="btn primary pc-take" onClick={() => { tap(); take({ mins: own, who: null, job: 0 }); }}>{tx('Take', '接单')}</button>
                       </div>
                     </div>
-                    <div className="sub">New orders arrive after each one you finish.</div>
+                    <div className="sub">{tx('New orders arrive after each one you finish.', '每完成一张，就会来新的工作单。')}</div>
                   </>}
-                  {tab === 'team' && <><div className="between"><div className="pc-h">Coworkers</div><span className="sub">Click a strip to open it</span></div><TeamAccordion s={s} /></>}
+                  {tab === 'team' && <><div className="between"><div className="pc-h">{tx('Coworkers', '同事')}</div><span className="sub">{tx('Click a strip to open it', '点一条就能展开')}</span></div><TeamAccordion s={s} /></>}
                   {tab === 'past' && <>
-                    <div className="between"><div className="pc-h">Past orders</div>
+                    <div className="between"><div className="pc-h">{tx('Past orders', '历史工作单')}</div>
                       <select value={filter} onChange={(e) => setFilter(e.target.value as 'all' | CoworkerId)}>
-                        <option value="all">Everyone</option>{co.people.map((k) => <option key={k} value={k}>{COWORKERS[k].name}</option>)}
+                        <option value="all">{tx('Everyone', '所有人')}</option>{co.people.map((k) => <option key={k} value={k}>{COWORKERS[k].name}</option>)}
                       </select></div>
-                    {!past.length && <div className="pc-empty">Nothing here yet. Finished and stopped orders show up here.</div>}
+                    {!past.length && <div className="pc-empty">{tx('Nothing here yet. Finished and stopped orders show up here.', '这里还什么都没有。完成或中途停下的工作单都会出现在这里。')}</div>}
                     <div className="pc-list">
                       {past.map((h) => (
                         <div key={h.at} className="pc-row past">
-                          <div className="pc-mins pix">{h.mins}<small>min</small></div>
+                          <div className="pc-mins pix">{h.mins}<small>{tx('min', '分钟')}</small></div>
                           {h.who ? <Head id={h.who} size={34} /> : <span className="head blank" style={{ width: 34, height: 34 }}>⏱</span>}
-                          <div className="pc-what"><b>{h.job}</b><span>{h.who ? `For ${COWORKERS[h.who].name} · ` : ''}You: {h.focus}{h.steps ? ` · ${h.stepsDone}/${h.steps} steps` : ''}</span><small>{when(h.at)}</small></div>
-                          <span className={h.finished ? 'pc-res ok' : 'pc-res'}>{h.finished ? 'Finished' : `Stopped at ${h.worked} min`}</span>
-                          <div className="pc-pay">+{h.coins} coins<br /><span>{h.finished && h.who ? '+1/10 heart' : 'no heart'}</span></div>
+                          <div className="pc-what"><b>{h.job}</b><span>{h.who ? (ZH ? `帮${COWORKERS[h.who].name} · ` : `For ${COWORKERS[h.who].name} · `) : ''}{tx('You: ', '你：')}{h.focus}{h.steps ? (ZH ? ` · ${h.stepsDone}/${h.steps} 步` : ` · ${h.stepsDone}/${h.steps} steps`) : ''}</span><small>{when(h.at)}</small></div>
+                          <span className={h.finished ? 'pc-res ok' : 'pc-res'}>{h.finished ? tx('Finished', '已完成') : ZH ? `停在 ${h.worked} 分钟` : `Stopped at ${h.worked} min`}</span>
+                          <div className="pc-pay">+{h.coins} {tx('coins', '金币')}<br /><span>{h.finished && h.who ? tx('+1/10 heart', '+1/10 颗心') : tx('no heart', '没有心')}</span></div>
                         </div>))}
                     </div>
                   </>}

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { ZH, t } from './lang';
 import { DIR_COL } from './look';
 import { Host } from './Onboarding';
 import { Save } from './state';
@@ -10,10 +11,10 @@ const A = `${import.meta.env.BASE_URL}assets/`;
 const tap = () => play('ui_tap', 0.4);
 const W = 1280, H = 832;
 const TUT = [
-  'All unwrapped! Your things are on your desk now. Try clicking one of them.',
-  'From here you can Move it to another spot, or put it in your backpack. Give one a try.',
-  "You can also just drag things: pick one up and drop it on a glowing spot. Each thing only fits certain spots, so a lamp stays on the desk.",
-  'Anything you take off the desk waits in your backpack, down here. Drag it back onto the desk whenever you like.',
+  t('All unwrapped! Your things are on your desk now. Try clicking one of them.', '全拆完啦！东西都摆在你桌上了。试着点一下其中一个。'),
+  t('From here you can Move it to another spot, or put it in your backpack. Give one a try.', '在这里可以把它移到别的位置，或者放进背包。试一个看看。'),
+  t("You can also just drag things: pick one up and drop it on a glowing spot. Each thing only fits certain spots, so a lamp stays on the desk.", '也可以直接拖动：拿起一个东西，放到发光的位置上。每样东西只能放在特定的位置，所以台灯只能待在桌上。'),
+  t('Anything you take off the desk waits in your backpack, down here. Drag it back onto the desk whenever you like.', '从桌上拿下来的东西都在下面的背包里等着。随时都可以拖回桌上。'),
 ];
 const CHAR_K = 6, CHAR_ROW0 = 9, CHAR_ROWS = 19, CHAR_TOP = 378;   // size; the rows of the 16x32 frame drawn (top of the hair to the shoulders); where the hair starts
 type Place = Record<string, string | null>;
@@ -145,10 +146,10 @@ export default function DeskView({ s, sheet, up, mode, openPc, leave }: {
   const left = STARTER.filter((g) => !s.desk.includes(g.id));
   const all = left.length === 0;
   const pct = (x: number, y: number) => ({ left: `${(x / W) * 100}%`, top: `${(y / H) * 100}%` });
-  const line = all ? "That's how your desk works. One more thing: there's a little surprise waiting for you somewhere in the office. Have a look around!"
+  const line = all ? t("That's how your desk works. One more thing: there's a little surprise waiting for you somewhere in the office. Have a look around!", '工位就是这么用的。还有一件事：办公室某个地方有个小惊喜在等你，去找找看吧！')
 
-    : s.desk.length === 0 ? `Welcome to your desk, ${s.name || 'Juniper'}! We left a few things to get you started. Click a gift to open it.`
-    : `${left.length} more to open.`;
+    : s.desk.length === 0 ? (ZH ? `欢迎来到你的工位，${s.name || '小柏'}！我们给你准备了几样东西，点一个礼物拆开看看。` : `Welcome to your desk, ${s.name || 'Juniper'}! We left a few things to get you started. Click a gift to open it.`)
+    : ZH ? `还有 ${left.length} 个没拆。` : `${left.length} more to open.`;
 
   return (
     <div className={`gift-room${live ? '' : ' still'}`}>
@@ -156,19 +157,19 @@ export default function DeskView({ s, sheet, up, mode, openPc, leave }: {
         <canvas ref={ref} width={W} height={H} />
         {/* your computer: click it to use it */}
         {mode === 'desk' && <button className="pc-hot" style={{ ...pct(585, 288), width: `${(110 / W) * 100}%`, height: `${(98 / H) * 100}%` }}
-          onPointerDown={(e) => e.stopPropagation()} onClick={() => { tap(); openPc?.(); }} aria-label="Use the computer"><span>Tasklet</span></button>}
+          onPointerDown={(e) => e.stopPropagation()} onClick={() => { tap(); openPc?.(); }} aria-label={t('Use the computer', '用电脑')}><span>{t('Tasklet', '任务夹')}</span></button>}
         {/* spots an item can go: shown while one is picked up */}
         {marks.map((sl) => (
-          <button key={sl.id} className={`slot-mark${sl.id === showFor!.from ? ' here' : ''}`} style={pct(sl.at[0], sl.at[1])} aria-label={`Put it here (${sl.kind})`}
+          <button key={sl.id} className={`slot-mark${sl.id === showFor!.from ? ' here' : ''}`} style={pct(sl.at[0], sl.at[1])} aria-label={t('Put it here', '放在这里')}
             onPointerDown={(e) => e.stopPropagation()} onClick={() => { if (placing) { putAt(placing.id, sl.id); setPlacing(null); step(1); } }} />))}
         {mode === 'gifts' && left.map((g) => { const at = slot(g.home).at; return (
-          <button key={g.id} className="gift-mini" aria-label={`Open the gift for the ${g.name.toLowerCase()}`} style={pct(at[0], at[1])}
+          <button key={g.id} className="gift-mini" aria-label={t('Open the gift', '拆开礼物')} style={pct(at[0], at[1])}
             onPointerDown={(e) => e.stopPropagation()} onClick={() => { tap(); setOpen(g.id); }}><MiniBox /></button>); })}
         {menuFor && place[menuFor] && (() => { const at = slot(place[menuFor]!).at, [, , , bh] = item(menuFor).box; return (
           <div className="item-menu card" style={pct(at[0], at[1] - bh)} onPointerDown={(e) => e.stopPropagation()}>
             <b>{item(menuFor).name}</b>
-            <button className="opt" onClick={() => { tap(); setPlacing({ id: menuFor, from: place[menuFor] }); setMenuFor(null); }}><b>Move</b><span>Pick a new spot (or just drag it)</span></button>
-            <button className="opt" onClick={() => { putAt(menuFor, null); setMenuFor(null); step(1); }}><b>Put in backpack</b><span>Take it off the desk for now</span></button>
+            <button className="opt" onClick={() => { tap(); setPlacing({ id: menuFor, from: place[menuFor] }); setMenuFor(null); }}><b>{t('Move', '移动')}</b><span>{t('Pick a new spot (or just drag it)', '选一个新位置（或者直接拖）')}</span></button>
+            <button className="opt" onClick={() => { putAt(menuFor, null); setMenuFor(null); step(1); }}><b>{t('Put in backpack', '放进背包')}</b><span>{t('Take it off the desk for now', '先从桌上拿下来')}</span></button>
           </div>); })()}
         {mode === 'gifts' && all && (tut === 0 || tut === 2) && !held && !menuFor && !placing && Object.entries(place).filter(([, sl]) => sl).map(([id, sl]) => {
           const at = slot(sl!).at, [, , bw, bh] = item(id).box; return <span key={id} className="tut-ring" style={{ ...pct(at[0], at[1] - bh / 2), width: `${((bw + 30) / W) * 100}%`, height: `${((bh + 30) / H) * 100}%` }} />; })}
@@ -179,35 +180,35 @@ export default function DeskView({ s, sheet, up, mode, openPc, leave }: {
 
       {live && s.desk.length > 0 && (
         <div className={`desk-storage card${mode === 'gifts' && all && tut === 3 ? ' tut-glow' : ''}${drawer ? ' open' : ''}${held?.dragging && held.from ? ' drop' : ''}`} onPointerDown={(e) => e.stopPropagation()}>
-          <button className="linkish" onClick={() => { tap(); setDrawer(!drawer); }}>🎒 Backpack · {stored.length}</button>
+          <button className="linkish" onClick={() => { tap(); setDrawer(!drawer); }}>🎒 {t('Backpack', '背包')} · {stored.length}</button>
           {(drawer || (held?.dragging && held.from)) && (
             <div className="drawer">
-              {held?.dragging && held.from && <div className="sub">Drop here to put it in your backpack</div>}
-              {!held?.dragging && !stored.length && <div className="sub">Your backpack is empty. Click a thing on your desk and choose Put in backpack.</div>}
+              {held?.dragging && held.from && <div className="sub">{t('Drop here to put it in your backpack', '放到这里就会收进背包')}</div>}
+              {!held?.dragging && !stored.length && <div className="sub">{t('Your backpack is empty. Click a thing on your desk and choose Put in backpack.', '背包是空的。点一下桌上的东西，选“放进背包”。')}</div>}
               {!held?.dragging && stored.map((id) => (
-                <button key={id} className="drawer-item" onPointerDown={(e) => fromDrawer(id, e)} title={`${item(id).name}: drag it onto your desk, or click it and pick a spot`}>
+                <button key={id} className="drawer-item" onPointerDown={(e) => fromDrawer(id, e)} title={ZH ? `${item(id).name}：拖到桌上，或者点一下再选位置` : `${item(id).name}: drag it onto your desk, or click it and pick a spot`}>
                   <ItemPic id={id} k={Math.min(52 / item(id).box[2], 52 / item(id).box[3])} /><span>{item(id).name}</span></button>))}
             </div>)}
         </div>)}
 
-      {placing && <div className="card place-tip">Click a glowing spot to put the {item(placing.id).name.toLowerCase()} there. <button className="linkish" onClick={() => setPlacing(null)}>Cancel</button></div>}
+      {placing && <div className="card place-tip">{ZH ? `点一个发光的位置，把${item(placing.id).name}放过去。` : `Click a glowing spot to put the ${item(placing.id).name.toLowerCase()} there.`} <button className="linkish" onClick={() => setPlacing(null)}>{t('Cancel', '取消')}</button></div>}
 
       {mode === 'gifts' && (
         <div className="card gift-card">
-          <div className="between"><span className="chip on small">Your desk</span><span className="sub">{STARTER.length - left.length} of {STARTER.length} opened</span></div>
+          <div className="between"><span className="chip on small">{t('Your desk', '你的工位')}</span><span className="sub">{ZH ? `已拆 ${STARTER.length - left.length} / ${STARTER.length}` : `${STARTER.length - left.length} of ${STARTER.length} opened`}</span></div>
           {(!all || tut >= TUT.length) && <Host co={s.company} line={line} size={56} />}
           {all && tut < TUT.length && <>
             <Host co={s.company} line={TUT[tut]} size={56} />
             <div className="between foot"><div className="steps">{TUT.map((_, i) => <i key={i} className={i <= tut ? 'on' : ''} />)}</div>
-              <div className="row"><button className="linkish" onClick={() => { tap(); setTut(TUT.length); }}>Skip</button>
-                <button className="btn ghost" onClick={() => { tap(); setTut(tut + 1); }}>{tut === TUT.length - 1 ? 'Got it' : 'Next'}</button></div></div>
+              <div className="row"><button className="linkish" onClick={() => { tap(); setTut(TUT.length); }}>{t('Skip', '跳过')}</button>
+                <button className="btn ghost" onClick={() => { tap(); setTut(tut + 1); }}>{tut === TUT.length - 1 ? t('Got it', '知道啦') : t('Next', '下一步')}</button></div></div>
           </>}
-          {all && tut >= TUT.length && <div className="between foot"><span /><button className="btn primary" onClick={() => { tap(); up({ phase: 'free', surprise: s.surprise === 'opened' ? 'opened' : 'waiting' }); }}>Head into the office →</button></div>}
+          {all && tut >= TUT.length && <div className="between foot"><span /><button className="btn primary" onClick={() => { tap(); up({ phase: 'free', surprise: s.surprise === 'opened' ? 'opened' : 'waiting' }); }}>{t('Head into the office →', '去办公室转转 →')}</button></div>}
         </div>)}
       {mode === 'desk' && !placing && (
         <div className="desk-bar">
-          <button className="btn ghost" onClick={() => { tap(); leave?.(); }}>← Back to the office</button>
-          <span className="card desk-hint">Click the computer for your work orders. Drag things to rearrange your desk.</span>
+          <button className="btn ghost" onClick={() => { tap(); leave?.(); }}>{t('← Back to the office', '← 回到办公室')}</button>
+          <span className="card desk-hint">{t('Click the computer for your work orders. Drag things to rearrange your desk.', '点电脑看工作单。拖动东西来重新布置工位。')}</span>
         </div>)}
 
       {open && <Unwrap key={open} id={open} done={(toDesk) => { play('coin', 0.5); up({ desk: [...s.desk, open], place: { ...place, [open]: toDesk ? freeSlot(open, place) : null } }); setOpen(null); }} close={() => setOpen(null)} />}
@@ -348,18 +349,18 @@ export function Unwrap({ id, done, close }: { id: string; done: (toDesk: boolean
           {stage === 'reveal' && <g className="gift-orbit">{[0, 1, 2, 3, 4, 5, 6, 7].map((k) => { const a = (k / 8) * Math.PI * 2, rx = 92, ry = 78; return (
             <path key={k} className="spark" d={`M${150 + Math.cos(a) * rx} ${165 + Math.sin(a) * ry - 8} l3.5 7 l7 3.5 l-7 3.5 l-3.5 7 l-3.5 -7 l-7 -3.5 l7 -3.5 Z`} fill={k % 2 ? '#fff3b0' : '#ffffff'} style={{ animationDelay: `${k * 0.15}s` }} />); })}</g>}
         </svg>
-        {stage === 'tied' && <div className="gift-tip pix">Pull the ribbon <span>↘</span></div>}
+        {stage === 'tied' && <div className="gift-tip pix">{t('Pull the ribbon', '拉开丝带')} <span>↘</span></div>}
         {stage === 'reveal' && (
           <div className="card gift-reveal">
             <div className="pix h1">{it.name}</div>
             <div className="sub">{it.line}</div>
             <div className="row gift-choice">
-              <button className="btn primary" onClick={() => { tap(); done(true); }}>Put it on my desk</button>
-              <button className="btn ghost" onClick={() => { tap(); done(false); }}>🎒 Put it in my backpack</button>
+              <button className="btn primary" onClick={() => { tap(); done(true); }}>{t('Put it on my desk', '放在我的桌上')}</button>
+              <button className="btn ghost" onClick={() => { tap(); done(false); }}>🎒 {t('Put it in my backpack', '放进我的背包')}</button>
             </div>
           </div>)}
       </div>
-      {stage === 'tied' && <button className="linkish gift-later" onClick={() => { tap(); close(); }}>Not yet</button>}
+      {stage === 'tied' && <button className="linkish gift-later" onClick={() => { tap(); close(); }}>{t('Not yet', '先不拆')}</button>}
     </div>
   );
 }

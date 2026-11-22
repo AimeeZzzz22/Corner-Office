@@ -3,6 +3,7 @@ import { COWORKERS, CoworkerId } from './data';
 import { Save } from './state';
 import { play } from './sfx';
 import { LiquidTabs, useTear } from './ui';
+import { ZH, t } from './lang';
 
 // ---------------- blind boxes, from the glass piggy bank ----------------
 // Every hour of finished work fills the piggy bank and earns one box (at most 8 a day). Opening one costs 45 Coins
@@ -13,11 +14,13 @@ export const BOX_COST = 45, BOX_MINS = 60, BOX_DAY_MAX = 8;
 type Tier = 'normal' | 'cute' | 'secret';
 export interface Item { id: string; name: string; tier: Tier | 'shop' | 'bakery' | 'fridge'; price?: number; cat?: string; x: number; y: number; w: number; h: number; fav: string | null; why: string | null }
 const TIER: Record<Tier, { label: string; pct: string; col: string }> = {
-  normal: { label: 'Normal', pct: '66%', col: '#ece6dc' }, cute: { label: 'Cute', pct: '29%', col: '#fad6e2' }, secret: { label: 'Secret', pct: '5%', col: '#ded4fa' } };
+  normal: { label: t('Normal', '普通'), pct: '66%', col: '#ece6dc' }, cute: { label: t('Cute', '可爱'), pct: '29%', col: '#fad6e2' }, secret: { label: t('Secret', '隐藏'), pct: '5%', col: '#ded4fa' } };
 const today = () => new Date().toDateString();
+const tAll = t('All', '全部');
 
 let itemsP: Promise<{ odds: Record<Tier, number>; items: Item[] }> | null = null;
-export const loadItems = () => (itemsP ||= fetch(`${A}items.json`).then((r) => r.json()));
+// the Chinese build shows each item's Chinese name (name_zh / why_zh in items.json)
+export const loadItems = () => (itemsP ||= fetch(`${A}items.json`).then((r) => r.json()).then((d) => (ZH ? { ...d, items: d.items.map((i: Item & { name_zh?: string; why_zh?: string }) => ({ ...i, name: i.name_zh ?? i.name, why: i.why_zh ?? i.why })) } : d)));
 
 // the piggy bank's state for today (a new day resets the 8-a-day count)
 export const piggyToday = (b: Save['blind']) => (b.day === today() ? b : { ...b, day: today(), earned: 0 });
@@ -78,32 +81,32 @@ export function BlindBoxTab({ s, up, close }: { s: Save; up: (p: Partial<Save>) 
         <div className="bb-cols">
           {/* the piggy bank */}
           <div className="bb-panel">
-            <div className="pix bb-h">Your piggy bank</div>
-            <div className="sub">Every hour of finished tasks earns a blind pack.</div>
-            <div className="bb-pig"><img key={puff} className={puff ? 'puff' : ''} src={pigImg} alt="The glass piggy bank" /></div>
-            <div className="fill-pill" style={{ ['--pct' as string]: `${(b.mins / BOX_MINS) * 100}%` }}><span className="pix">{Math.floor(b.mins)} / {BOX_MINS} min</span><small>to the next pack</small></div>
-            <div className="bb-line">{full ? "That's 8 packs today. The piggy bank rests until tomorrow." : `${left} more minutes of tasks to your next pack`}</div>
-            <div className="sub">Short tasks add up, and nothing resets.</div>
-            <div className="bb-today"><b>Today</b><span>{Array.from({ length: BOX_DAY_MAX }, (_, i) => <i key={i} className={i < b.earned ? 'on' : ''} />)}</span><span className="sub">{b.earned} of {BOX_DAY_MAX}</span></div>
+            <div className="pix bb-h">{t('Your piggy bank', '你的存钱罐')}</div>
+            <div className="sub">{t('Every hour of finished tasks earns a blind pack.', '每完成一小时的任务，就能得到一个盲包。')}</div>
+            <div className="bb-pig"><img key={puff} className={puff ? 'puff' : ''} src={pigImg} alt={t('The glass piggy bank', '玻璃存钱罐')} /></div>
+            <div className="fill-pill" style={{ ['--pct' as string]: `${(b.mins / BOX_MINS) * 100}%` }}><span className="pix">{Math.floor(b.mins)} / {BOX_MINS} {t('min', '分钟')}</span><small>{t('to the next pack', '到下一个盲包')}</small></div>
+            <div className="bb-line">{full ? t("That's 8 packs today. The piggy bank rests until tomorrow.", '今天已经攒了 8 个盲包。存钱罐休息到明天。') : ZH ? `再做 ${left} 分钟任务，就能得到下一个盲包` : `${left} more minutes of tasks to your next pack`}</div>
+            <div className="sub">{t('Short tasks add up, and nothing resets.', '短任务也会累积，什么都不会清零。')}</div>
+            <div className="bb-today"><b>{t('Today', '今天')}</b><span>{Array.from({ length: BOX_DAY_MAX }, (_, i) => <i key={i} className={i < b.earned ? 'on' : ''} />)}</span><span className="sub">{b.earned} / {BOX_DAY_MAX}</span></div>
           </div>
           {/* boxes waiting */}
           <div className="bb-panel mid">
-            <div className="pix bb-h">{b.ready ? `${b.ready} pack${b.ready > 1 ? 's' : ''} ready` : 'No packs yet'}</div>
+            <div className="pix bb-h">{b.ready ? (ZH ? `${b.ready} 个盲包待拆` : `${b.ready} pack${b.ready > 1 ? 's' : ''} ready`) : t('No packs yet', '还没有盲包')}</div>
             <div className="bb-boxes">{b.ready ? Array.from({ length: Math.min(3, b.ready) }, (_, i) => <img key={i} src={`${A}pack_${PACKS[i]}.png`} alt="" style={{ transform: `translate(${(i - (Math.min(3, b.ready) - 1) / 2) * 70}px, ${i % 2 ? 14 : 0}px) rotate(${(i - 1) * 6}deg)`, zIndex: 3 - i }} />)
-              : <div className="sub center">Finish an hour of work orders to earn one.</div>}</div>
-            {b.ready > 0 && <div className="bb-q">What will it be?</div>}
-            <button className="btn primary bb-open" disabled={!canOpen} onClick={() => { tap(); open(); }}>Open a pack · {BOX_COST} coins</button>
-            <div className="sub center">{b.ready > 0 && s.coins < BOX_COST ? `You need ${BOX_COST - s.coins} more coins.` : "That's 30 minutes of coins. You keep the rest."}</div>
-            <button className="btn ghost" onClick={() => { tap(); close(); }}>Save for later</button>
+              : <div className="sub center">{t('Finish an hour of work orders to earn one.', '完成一小时的工作单就能得到一个。')}</div>}</div>
+            {b.ready > 0 && <div className="bb-q">{t('What will it be?', '会是什么呢？')}</div>}
+            <button className="btn primary bb-open" disabled={!canOpen} onClick={() => { tap(); open(); }}>{t('Open a pack', '拆一个盲包')} · {BOX_COST} {t('coins', '金币')}</button>
+            <div className="sub center">{b.ready > 0 && s.coins < BOX_COST ? (ZH ? `还差 ${BOX_COST - s.coins} 金币。` : `You need ${BOX_COST - s.coins} more coins.`) : t("That's 30 minutes of coins. You keep the rest.", '相当于 30 分钟的金币，剩下的归你。')}</div>
+            <button className="btn ghost" onClick={() => { tap(); close(); }}>{t('Save for later', '留着以后拆')}</button>
           </div>
           {/* what's inside */}
           <div className="bb-panel inside">
-            <div className="between"><div className="pix bb-h">What's inside</div>
-              <div className="row bb-tabs">{(['all', 'normal', 'cute', 'secret'] as const).map((t) => <button key={t} className={view === t ? 'chip small on' : 'chip small'} onClick={() => { tap(); setView(t); }}>{t === 'all' ? 'All' : TIER[t].label}</button>)}</div></div>
+            <div className="between"><div className="pix bb-h">{t("What's inside", '里面有什么')}</div>
+              <div className="row bb-tabs">{(['all', 'normal', 'cute', 'secret'] as const).map((t) => <button key={t} className={view === t ? 'chip small on' : 'chip small'} onClick={() => { tap(); setView(t); }}>{t === 'all' ? tAll : TIER[t].label}</button>)}</div></div>
             <div className="bb-tiers">
               {(['normal', 'cute', 'secret'] as Tier[]).filter((t) => view === 'all' || view === t).map((t) => (
                 <div key={t} className="bb-tier">
-                  <div className="between"><span className="bb-tag" style={{ background: TIER[t].col }}>{TIER[t].label} {TIER[t].pct}</span><span className="sub">{found(t)} / {total(t)} found</span></div>
+                  <div className="between"><span className="bb-tag" style={{ background: TIER[t].col }}>{TIER[t].label} {TIER[t].pct}</span><span className="sub">{ZH ? `已收集 ${found(t)} / ${total(t)}` : `${found(t)} / ${total(t)} found`}</span></div>
                   <div className="bb-grid">{data?.items.filter((i) => i.tier === t).map((i) => (
                     <span key={i.id} className={`bb-cell${pack[i.id] ? '' : ' unfound'}${t === 'secret' && !pack[i.id] ? ' secret' : ''}`} title={pack[i.id] ? `${i.name}${pack[i.id] > 1 ? ` ×${pack[i.id]}` : ''}` : '???'}>
                       <ItemPic it={i} size={40} hide={!pack[i.id]} />{t === 'secret' && !pack[i.id] && <em>?</em>}{pack[i.id] > 1 && <small>×{pack[i.id]}</small>}
@@ -114,14 +117,14 @@ export function BlindBoxTab({ s, up, close }: { s: Save; up: (p: Partial<Save>) 
         </div>
         {/* test controls, only on this page */}
         <div className="bb-test">
-          <b>Test controls</b>
-          <button className="chip" onClick={() => { tap(); work(15); }}>+15 min of finished work</button>
-          <button className="chip" onClick={() => { tap(); work(60); }}>+1 hour of finished work</button>
-          <button className="chip" onClick={() => { tap(); play('coins_many', 0.4); up({ coins: s.coins + 200 }); }}>+200 coins</button>
-          <button className="chip" onClick={() => { tap(); up({ blind: { ...b, day: 'reset', earned: 0 } }); }}>New day</button>
-          <button className="chip" onClick={() => simulate(1000)}>Check the odds (1,000 free draws)</button>
-          <button className="chip" onClick={() => { tap(); up({ pack: {}, blind: { mins: 0, ready: 0, day: '', earned: 0 } }); setSim(null); }}>Start over</button>
-          {sim && <span className="bb-sim">Normal {(sim.normal / 10).toFixed(1)}% · Cute {(sim.cute / 10).toFixed(1)}% · Secret {(sim.secret / 10).toFixed(1)}%</span>}
+          <b>{t('Test controls', '测试按钮')}</b>
+          <button className="chip" onClick={() => { tap(); work(15); }}>{t('+15 min of finished work', '+15 分钟已完成的工作')}</button>
+          <button className="chip" onClick={() => { tap(); work(60); }}>{t('+1 hour of finished work', '+1 小时已完成的工作')}</button>
+          <button className="chip" onClick={() => { tap(); play('coins_many', 0.4); up({ coins: s.coins + 200 }); }}>{t('+200 coins', '+200 金币')}</button>
+          <button className="chip" onClick={() => { tap(); up({ blind: { ...b, day: 'reset', earned: 0 } }); }}>{t('New day', '新的一天')}</button>
+          <button className="chip" onClick={() => simulate(1000)}>{t('Check the odds (1,000 free draws)', '检查概率（免费抽 1000 次）')}</button>
+          <button className="chip" onClick={() => { tap(); up({ pack: {}, blind: { mins: 0, ready: 0, day: '', earned: 0 } }); setSim(null); }}>{t('Start over', '重新开始')}</button>
+          {sim && <span className="bb-sim">{TIER.normal.label} {(sim.normal / 10).toFixed(1)}% · {TIER.cute.label} {(sim.cute / 10).toFixed(1)}% · {TIER.secret.label} {(sim.secret / 10).toFixed(1)}%</span>}
         </div>
       {opening && <Opening it={opening} count={pack[opening.id] ?? 1} again={canOpen} next={() => { setOpening(null); setWantNext(true); }} done={() => setOpening(null)} />}
     </>
@@ -136,10 +139,10 @@ export default function Shop({ s, up, close, tab: tab0 = 'shop' }: { s: Save; up
     <div className="bb-dim">
       <div className="card bb">
         <div className="bb-head">
-          <div className="pix bb-title">Little Things Shop</div>
-          <LiquidTabs className="bb-maintabs" value={tab} onChange={setTab} tabs={[{ key: 'shop', label: 'Shop' }, { key: 'blind', label: <>Blind packs{ready > 0 && <em>{ready}</em>}</> }]} />
+          <div className="pix bb-title">{t('Little Things Shop', '小物杂货铺')}</div>
+          <LiquidTabs className="bb-maintabs" value={tab} onChange={setTab} tabs={[{ key: 'shop', label: t('Shop', '商店') }, { key: 'blind', label: <>{t('Blind packs', '盲包')}{ready > 0 && <em>{ready}</em>}</> }]} />
           <div className="bb-coins"><img src={`${import.meta.env.BASE_URL}assets/coin.png`} alt="" /> <b>{s.coins.toLocaleString()}</b></div>
-          <button className="bb-x" onClick={() => { tap(); close(); }} aria-label="Close">✕</button>
+          <button className="bb-x" onClick={() => { tap(); close(); }} aria-label={t('Close', '关闭')}>✕</button>
         </div>
         {tab === 'blind' ? <BlindBoxTab s={s} up={up} close={close} /> : <Catalogue s={s} up={up} />}
       </div>
@@ -147,6 +150,7 @@ export default function Shop({ s, up, close, tab: tab0 = 'shop' }: { s: Save; up
   );
 }
 const CATS = ['All', 'Desk', 'Shelf', 'Wall', 'Floor', 'Chairs', 'Wallpaper', 'Pets'];
+const CAT_LABEL: Record<string, string> = { All: t('All', '全部'), Desk: t('Desk', '桌面'), Shelf: t('Shelf', '架子'), Wall: t('Wall', '墙上'), Floor: t('Floor', '地面'), Chairs: t('Chairs', '椅子'), Wallpaper: t('Wallpaper', '墙纸'), Pets: t('Pets', '宠物') };
 function Catalogue({ s, up }: { s: Save; up: (p: Partial<Save>) => void }) {
   const [data, setData] = useState<Item[] | null>(null);
   const [cat, setCat] = useState('All');
@@ -159,19 +163,19 @@ function Catalogue({ s, up }: { s: Save; up: (p: Partial<Save>) => void }) {
   const list = (data ?? []).filter((i) => cat === 'All' || i.cat === cat).sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
   return (
     <div className="shop-body">
-      <div className="between"><div className="row bb-tabs">{CATS.map((c) => <button key={c} className={cat === c ? 'chip small on' : 'chip small'} onClick={() => { tap(); setCat(c); }}>{c}</button>)}</div>
-        <span className="sub">New things arrive every week. Food and drink are at the bakery.</span></div>
+      <div className="between"><div className="row bb-tabs">{CATS.map((c) => <button key={c} className={cat === c ? 'chip small on' : 'chip small'} onClick={() => { tap(); setCat(c); }}>{CAT_LABEL[c]}</button>)}</div>
+        <span className="sub">{t('New things arrive every week. Food and drink are at the bakery.', '每周都有新东西上架。吃的喝的在面包房。')}</span></div>
       <div className="shop-grid">
         {list.map((it) => { const owned = s.pack[it.id] ?? 0, can = s.coins >= (it.price ?? 0); return (
           <div key={it.id} className={`shop-item${just === it.id ? ' just' : ''}`}>
             <div className="shop-pic"><ItemPic it={it} size={60} /></div>
             <b>{it.name}</b>
-            <span className="sub">{it.cat}{owned ? ` · you have ${owned}` : ''}</span>
+            <span className="sub">{CAT_LABEL[it.cat ?? ''] ?? it.cat}{owned ? (ZH ? ` · 已有 ${owned} 个` : ` · you have ${owned}`) : ''}</span>
             <button className="btn primary shop-buy" disabled={!can} onClick={() => buy(it)}>
               <img src={`${import.meta.env.BASE_URL}assets/coin.png`} alt="" /> {it.price}</button>
           </div>); })}
       </div>
-      <div className="sub">Things you buy go into your pack. Placing them in your corner comes later in the demo.</div>
+      <div className="sub">{t('Things you buy go into your backpack. Placing them in your corner comes later in the demo.', '买到的东西会放进背包。把它们摆到你的角落，会在之后的版本里加入。')}</div>
     </div>
   );
 }
@@ -232,23 +236,23 @@ function Opening({ it, count, again, next, done }: { it: Item; count: number; ag
         </div></div>
         {/* the pack */}
         <div className="pk-pack" {...handlers}>
-          <img className="pk-body" src={`${A}pack_${color}_body.png`} alt="A blind pack" draggable={false} />
+          <img className="pk-body" src={`${A}pack_${color}_body.png`} alt={t('A blind pack', '盲包')} draggable={false} />
           <div className={`pk-strip${snap ? ' snap' : ''}`} style={{ ['--p' as string]: p }}>
             <span className="pk-attached" style={{ backgroundImage: `url(${strip})` }} />
             <span className="pk-torn" style={{ backgroundImage: `url(${strip})` }} />
           </div>
-          {stage === 'in' && <span className="pk-grab" style={{ opacity: p > 0.05 ? 0 : 1 }}>drag ➜</span>}
+          {stage === 'in' && <span className="pk-grab" style={{ opacity: p > 0.05 ? 0 : 1 }}>{t('drag ➜', '拖动 ➜')}</span>}
         </div>
       </div>
-      <div className="pk-hint">{stage === 'in' ? 'Drag along the top to tear it open, or just click the pack.' : stage === 'tease' ? (tier === 'secret' ? 'Ooh… something rare?' : tier === 'cute' ? 'Ooh…' : ' ') : ' '}</div>
+      <div className="pk-hint">{stage === 'in' ? t('Drag along the top to tear it open, or just click the pack.', '沿着顶部拖动把它撕开，或者直接点一下盲包。') : stage === 'tease' ? (tier === 'secret' ? t('Ooh… something rare?', '哇……难道是稀有的？') : tier === 'cute' ? t('Ooh…', '哇……') : ' ') : ' '}</div>
       {stage === 'reveal' && <div className="card bb-reveal">
         <span className="bb-tag" style={{ background: TIER[tier].col }}>{TIER[tier].label}{tier === 'secret' ? ' ✦' : ''}</span>
         <div className="pix h1">{it.name}</div>
-        <div className="sub">{fav ? `${fav.name}'s favourite gift. ${it.why}.` : count > 1 ? `A repeat: you have ${count} now.` : 'New! It goes into your backpack.'}</div>
-        {count === 1 && <span className="bb-new">NEW</span>}
+        <div className="sub">{fav ? (ZH ? `${fav.name}最喜欢的礼物。${it.why}。` : `${fav.name}'s favourite gift. ${it.why}.`) : count > 1 ? (ZH ? `重复了：你现在有 ${count} 个。` : `A repeat: you have ${count} now.`) : t('New! It goes into your backpack.', '新的！已放进你的背包。')}</div>
+        {count === 1 && <span className="bb-new">{t('NEW', '新')}</span>}
         <div className="row bb-btns">
-          {again && <button className="btn ghost" onClick={() => { tap(); next(); }}>Open another · {BOX_COST} coins</button>}
-          <button className="btn primary" onClick={() => { tap(); done(); }}>Done</button>
+          {again && <button className="btn ghost" onClick={() => { tap(); next(); }}>{t('Open another', '再拆一个')} · {BOX_COST} {t('coins', '金币')}</button>}
+          <button className="btn primary" onClick={() => { tap(); done(); }}>{t('Done', '完成')}</button>
         </div>
       </div>}
     </div>

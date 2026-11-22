@@ -1,3 +1,4 @@
+import { ZH } from './lang';
 import { COMPANIES, COWORKERS, COWORKER_IDS, CompanyId, CoworkerId, SLIP_MINS, TaskType } from './data';
 import { DEFAULT_LOOK, Look, fixLook } from './look';
 import { Focus, Reminders, SoundMode } from './obdata';
@@ -54,7 +55,7 @@ export const fresh = (): Save => {
     quiz: { focus: null, sound: null, reminders: null }, tourStop: 0, firstOrder: true, lookDone: false, history: [], desk: [], place: {}, blind: { mins: 0, ready: 0, day: '', earned: 0 }, pack: {}, treats: { day: '', have: [], used: [] }, fridge: { day: '', item: null, fortune: 0 }, surprise: 'none', notes: [], payWeek: '' };
 };
 
-const KEY = 'corner-office-demo-v1';
+const KEY = ZH ? 'corner-office-demo-v1-zh' : 'corner-office-demo-v1';   // both sites share one origin on GitHub Pages
 export function load(): Save {
   try {
     const s = JSON.parse(localStorage.getItem(KEY) || 'null');
